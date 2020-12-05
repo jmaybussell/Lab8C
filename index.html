@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Lab 8</title>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+        crossorigin=""/>
+
+        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+        integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+        crossorigin=""></script>
+
+        <script src="leaflet-side-by-side.js"></script>
+
+        <script type="text/javascript" src="data.js"></script>
+        <script type="text/javascript" src="data1.js"></script>
+
+        <link rel="icon" href="maple-leaf.png">
+
+        <style type="text/css">
+        html, body { margin: 0; padding: 0; height: 100%; }
+        #map { min-height: 100%; }
+
+                .legend {
+                  padding: 6px 8px;
+                  line-height: 18px;
+                  background: rgba(197, 239, 247, 1);
+                  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+                  border-radius: 5px;
+              }
+
+             .legend i {
+                  width: 18px;
+                  height: 18px;
+                  float: left;
+                  margin-right: 8px;
+                  opacity: 1.;
+              }
+            </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+        <script type="text/javascript">
+
+          var map = L.map('map', {
+              center: [37.50,-98.35],
+              zoom: 5
+          });
+
+var canvas = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '@ <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+           maxZoom: 11,
+           minZoom: 5
+         }).addTo(map);
+
+         function getColor(value) {
+             return value > .961 ? '#7a0177':
+                    value > .845 ? '#c51b8a':
+                    value > .66  ? '#f768a1':
+                    value > .39  ? '#fbb4b9':
+                                   '#feebe2';
+         }
+         function style(feature){
+    return {
+        fillColor: getColor(feature.properties.prcntFixMob),   // % with F_1 is the field name for the Broadband data
+        weight: 2,
+        opacity: 1,
+        color: '#ffc6ff',
+        fillOpacity: 0.9
+    };
+}
+
+L.GeoJSON.prototype.getContainer = function(){
+            return this.getPane();
+        };
+
+map.createPane('Region');
+map.createPane('State');
+
+var Region = L.geoJson(data,
+        {style: style,
+        Pane: 'Region'
+        }).bindPopup(function (layer){return layer.feature.properties.NAMELSAD
+         + '<p style="color:#C85A17"><b>' + layer.feature.properties.prcntFixMob.toString() + ' % Population with Access</b></p>';
+}).addTo(map);
+
+var State = L.geoJson(data1,
+        {style:style,
+        Pane: 'State'
+        }).bindPopup(function (layer){return layer.feature.properties.NAME
+         + '<p style="color:#C85A17"><b>' + layer.feature.properties.prcntFixMob.toString() + ' % Population with Access</b></p>';
+}).addTo(map);
+
+var legend = L.control({position: 'bottomright'}); // position of legend
+legend.onAdd = function (map) {
+
+  var div = L.DomUtil.create('div', 'legend'),
+      grades = [0, 0.39, 0.66, 0.845, 0.961]; // break values
+
+  div.innerHTML = '<b>Percentage of Population with<br> Fixed and Mobile Broadband - 2016 <br></b>'; // The legend title
+
+  for (var i = 0; i < grades.length; i++) {
+      div.innerHTML +=
+      '<i style="background:' + getColor(grades[i] + 0.1) + '"></i>' +
+      grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+  }
+  return div;
+};
+legend.addTo(map);
+
+ L.control.sideBySide(State, Region).addTo(map);
+
+      </script>
+ </body>
+</html>
